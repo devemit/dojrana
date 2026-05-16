@@ -12,6 +12,8 @@
     language: Language
     mapErrorLabel: string
     userFocusRequest: number
+    routeCoordinates: Coordinates[] | null
+    routeFocusRequest: number
     onSelectPlace: (id: string) => void
   }
 
@@ -22,6 +24,8 @@
     language,
     mapErrorLabel,
     userFocusRequest,
+    routeCoordinates,
+    routeFocusRequest,
     onSelectPlace,
   }: Props = $props()
 
@@ -30,9 +34,11 @@
 
   let map: L.Map | null = null
   let userMarker: L.CircleMarker | null = null
+  let routeLayer: L.Polyline | null = null
   let previousVisibleKey = ''
   let previousSelectedId = ''
   let previousUserFocusRequest = 0
+  let previousRouteFocusRequest = 0
   const markers = new globalThis.Map<string, L.Marker>()
   const dojranaCenter: L.LatLngExpression = [41.18647, 22.7203]
 
@@ -71,6 +77,7 @@
       map = null
       markers.clear()
       userMarker = null
+      routeLayer = null
     }
   })
 
@@ -83,6 +90,11 @@
     if (!map) return
     syncUserMarker()
     focusUserLocation()
+  })
+
+  $effect(() => {
+    if (!map) return
+    syncRoute()
   })
 
   function syncMarkers() {
@@ -199,6 +211,38 @@
     map.setView([userLocation.lat, userLocation.lng], Math.max(map.getZoom(), 16), {
       animate: true,
     })
+  }
+
+  function syncRoute() {
+    if (!map) return
+
+    if (!routeCoordinates || routeCoordinates.length < 2) {
+      routeLayer?.remove()
+      routeLayer = null
+      return
+    }
+
+    const latLngs = routeCoordinates.map((point) => [point.lat, point.lng] as L.LatLngTuple)
+
+    if (!routeLayer) {
+      routeLayer = L.polyline(latLngs, {
+        color: '#174f4b',
+        opacity: 0.9,
+        weight: 5,
+        lineCap: 'round',
+        lineJoin: 'round',
+      }).addTo(map)
+    } else {
+      routeLayer.setLatLngs(latLngs)
+    }
+
+    if (routeFocusRequest !== previousRouteFocusRequest) {
+      previousRouteFocusRequest = routeFocusRequest
+      map.fitBounds(routeLayer.getBounds().pad(0.22), {
+        animate: true,
+        maxZoom: 17,
+      })
+    }
   }
 
   function escapeHtml(value: string) {

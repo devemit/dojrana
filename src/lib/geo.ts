@@ -31,6 +31,23 @@ export function formatDistance(meters: number, language: Language): string {
   })} km`
 }
 
+export function formatDuration(seconds: number, language: Language): string {
+  const totalMinutes = Math.max(1, Math.round(seconds / 60))
+
+  if (totalMinutes < 60) {
+    return language === 'mk' ? `${totalMinutes} мин` : `${totalMinutes} min`
+  }
+
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+
+  if (minutes === 0) {
+    return language === 'mk' ? `${hours} ч` : `${hours} h`
+  }
+
+  return language === 'mk' ? `${hours} ч ${minutes} мин` : `${hours} h ${minutes} min`
+}
+
 export function googleDirectionsUrl(place: Place, origin?: Coordinates | null): string {
   const destination = `${place.lat},${place.lng}`
 

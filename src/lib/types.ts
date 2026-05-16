@@ -17,6 +17,22 @@ export type LocalizedText = Record<Language, string>
 
 export type OsmType = 'node' | 'way' | 'relation'
 
+export type RouteMode = 'foot-walking' | 'driving-car'
+
+export type RouteStatus = 'idle' | 'loading' | 'ready' | 'error'
+
+export type RouteErrorCode = 'missing-key' | 'missing-location' | 'request-failed' | 'no-route'
+
+export type RouteSummary = {
+  distanceMeters: number
+  durationSeconds: number
+}
+
+export type RouteResult = {
+  coordinates: Coordinates[]
+  summary: RouteSummary
+}
+
 export type Coordinates = {
   lat: number
   lng: number

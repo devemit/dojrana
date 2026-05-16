@@ -1,22 +1,56 @@
 <script lang="ts">
-  import { distanceBetween, formatDistance, googleDirectionsUrl, openStreetMapUrl } from './geo'
+  import { Car, Footprints, LoaderCircle, Route } from '@lucide/svelte'
+  import { distanceBetween, formatDistance, formatDuration, openStreetMapUrl } from './geo'
   import type { Translation } from './i18n'
   import { categoryIconComponents } from './categoryIcons'
-  import type { Coordinates, Language, Place } from './types'
+  import type {
+    Coordinates,
+    Language,
+    Place,
+    RouteErrorCode,
+    RouteMode,
+    RouteStatus,
+    RouteSummary,
+  } from './types'
 
   type Props = {
     place: Place | null
     userLocation: Coordinates | null
     language: Language
     t: Translation
+    routeMode: RouteMode
+    routeStatus: RouteStatus
+    routeSummary: RouteSummary | null
+    routeError: RouteErrorCode | null
+    onRouteModeChange: (mode: RouteMode) => void
+    onRequestRoute: () => void
   }
 
-  let { place, userLocation, language, t }: Props = $props()
+  let {
+    place,
+    userLocation,
+    language,
+    t,
+    routeMode,
+    routeStatus,
+    routeSummary,
+    routeError,
+    onRouteModeChange,
+    onRequestRoute,
+  }: Props = $props()
 
   function distanceLabel(selectedPlace: Place) {
     if (!userLocation) return ''
 
     return formatDistance(distanceBetween(userLocation, selectedPlace), language)
+  }
+
+  function routeDistanceLabel(summary: RouteSummary) {
+    return formatDistance(summary.distanceMeters, language)
+  }
+
+  function routeDurationLabel(summary: RouteSummary) {
+    return formatDuration(summary.durationSeconds, language)
   }
 </script>
 
@@ -52,10 +86,52 @@
         {/if}
       </div>
 
+      <div class="route-controls">
+        <div class="route-mode-toggle" aria-label={t.directions}>
+          <button
+            type="button"
+            class:active={routeMode === 'foot-walking'}
+            aria-pressed={routeMode === 'foot-walking'}
+            onclick={() => onRouteModeChange('foot-walking')}
+          >
+            <Footprints size={15} strokeWidth={2.35} aria-hidden="true" />
+            {t.walking}
+          </button>
+          <button
+            type="button"
+            class:active={routeMode === 'driving-car'}
+            aria-pressed={routeMode === 'driving-car'}
+            onclick={() => onRouteModeChange('driving-car')}
+          >
+            <Car size={15} strokeWidth={2.35} aria-hidden="true" />
+            {t.driving}
+          </button>
+        </div>
+
+        {#if routeSummary && routeStatus === 'ready'}
+          <div class="route-summary" role="status">
+            <Route size={16} strokeWidth={2.35} aria-hidden="true" />
+            <span>
+              {t.routeSummary}: {routeDistanceLabel(routeSummary)} · {routeDurationLabel(routeSummary)}
+            </span>
+          </div>
+        {/if}
+
+        {#if routeStatus === 'error' && routeError}
+          <p class="route-error" role="alert">{t.routeErrors[routeError]}</p>
+        {/if}
+      </div>
+
       <div class="detail-actions">
-        <a class="primary-action" href={googleDirectionsUrl(place, userLocation)} target="_blank" rel="noreferrer">
-          {t.directions}
-        </a>
+        <button class="primary-action" type="button" onclick={onRequestRoute} disabled={routeStatus === 'loading'}>
+          {#if routeStatus === 'loading'}
+            <LoaderCircle size={16} strokeWidth={2.35} aria-hidden="true" />
+            {t.routeLoading}
+          {:else}
+            <Route size={16} strokeWidth={2.35} aria-hidden="true" />
+            {t.routeAction}
+          {/if}
+        </button>
         <a href={openStreetMapUrl(place)} target="_blank" rel="noreferrer">
           {t.openMap}
         </a>

@@ -51,7 +51,7 @@
   const filteredPlaces = $derived.by(() => {
     const normalizedQuery = normalizeSearch(searchQuery)
 
-    return places.filter((place) => {
+    return places?.filter((place) => {
       const matchesCategory =
         activeCategory === 'all' ||
         (activeCategory === 'featured' ? place.featured : placeHasCategory(place, activeCategory))
@@ -78,7 +78,7 @@
   })
 
   const selectedPlace = $derived(
-    filteredPlaces.find((place) => place.id === selectedPlaceId) ?? filteredPlaces[0] ?? null,
+    filteredPlaces?.find((place) => place.id === selectedPlaceId) ?? filteredPlaces?.[0] ?? null,
   )
 
   const categoryCounts = $derived.by(() => {

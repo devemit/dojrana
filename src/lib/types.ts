@@ -25,6 +25,7 @@ export type Coordinates = {
 export type Place = Coordinates & {
   id: string
   category: CategoryId
+  additionalCategories?: CategoryId[]
   name: LocalizedText
   description: LocalizedText
   address?: LocalizedText

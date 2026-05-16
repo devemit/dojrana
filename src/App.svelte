@@ -6,7 +6,7 @@
   import PlaceList from './lib/PlaceList.svelte'
   import { categories, places } from './lib/data/places'
   import { translations } from './lib/i18n'
-  import type { CategoryFilterId, Coordinates, Language } from './lib/types'
+  import type { CategoryFilterId, Coordinates, Language, Place } from './lib/types'
 
   type LocationStatus =
     | 'idle'
@@ -34,7 +34,7 @@
     return places.filter((place) => {
       const matchesCategory =
         activeCategory === 'all' ||
-        (activeCategory === 'featured' ? place.featured : place.category === activeCategory)
+        (activeCategory === 'featured' ? place.featured : placeHasCategory(place, activeCategory))
 
       if (!matchesCategory) return false
       if (!normalizedQuery) return true
@@ -71,7 +71,9 @@
     counts.featured = places.filter((place) => place.featured).length
 
     for (const place of places) {
-      counts[place.category] += 1
+      for (const category of placeCategoryIds(place)) {
+        counts[category] += 1
+      }
     }
 
     return counts
@@ -100,6 +102,17 @@
 
   function normalizeSearch(value: string) {
     return value.trim().toLocaleLowerCase('mk-MK')
+  }
+
+  function placeHasCategory(place: Place, category: CategoryFilterId) {
+    if (category === 'all') return true
+    if (category === 'featured') return Boolean(place.featured)
+
+    return placeCategoryIds(place).includes(category)
+  }
+
+  function placeCategoryIds(place: Place) {
+    return [place.category, ...(place.additionalCategories ?? [])]
   }
 
   function setLanguage(nextLanguage: Language) {
